@@ -3,6 +3,7 @@ const zoneViewer = document.getElementById('zoneViewer');
 let zoneFrame = document.getElementById('zoneFrame');
 const searchBar = document.getElementById('searchBar');
 const sortOptions = document.getElementById('sortOptions');
+const filterOptions = document.getElementById('filterOptions');
 // https://www.jsdelivr.com/tools/purge
 const zonesurls = [
     "https://cdn.jsdelivr.net/%67%68/%67%6e%2d%6d%61%74%68/%61%73%73%65%74%73@%6d%61%69%6e/%7a%6f%6e%65%73%2e%6a%73%6f%6e",
@@ -16,6 +17,12 @@ const htmlURL = "https://cdn.jsdelivr.net/gh/gn-math/html@main";
 let zones = [];
 let popularityData = {};
 const featuredContainer = document.getElementById('featuredZones');
+function toTitleCase(str) {
+  return str.replace(
+    /\w\S*/g,
+    text => text.charAt(0).toUpperCase() + text.substring(1).toLowerCase()
+  );
+}
 async function listZones() {
     try {
       let sharesponse;
@@ -77,7 +84,7 @@ async function listZones() {
                             popup.innerHTML = `Play more games at <a href="https://gn-math.github.io" target="_blank" style="color:#004085; font-weight:bold;">https://gn-math.github.io</a>!`;
                             
                             const closeBtn = document.createElement("button");
-                            closeBtn.innerText = "✖";
+                            closeBtn.innerText = "?";
                             closeBtn.style.marginLeft = "10px";
                             closeBtn.style.background = "none";
                             closeBtn.style.border = "none";
@@ -103,6 +110,27 @@ async function listZones() {
                     openZone(zone);
                 }
             }
+        }
+
+        let alltags = [];
+        for (const obj of json) {
+            if (Array.isArray(obj.special)) {
+                alltags.push(...obj.special);
+            }
+        }
+
+        alltags = [...new Set(alltags)];
+        let filteroption = document.getElementById("filterOptions");
+        if (filteroption && filteroption.children.length > 1) {
+            while (filteroption.children.length > 1) {
+                filteroption.removeChild(filteroption.lastElementChild);
+            }
+        }
+        for (const tag of alltags) {
+            const opt = document.createElement("option");
+            opt.value = tag;
+            opt.textContent = toTitleCase(tag);
+            filteroption.appendChild(opt);
         }
     } catch (error) {
         console.error(error);
@@ -234,6 +262,19 @@ function displayZones(zones) {
     lazyImages.forEach(img => {
         imageObserver.observe(img);
     });
+}
+
+function filterZones2() {
+    const query = filterOptions.value;
+    if (query === "none") {
+        displayZones(zones);
+    } else {
+        const filteredZones = zones.filter(zone => zone.special?.includes(query));
+        if (query.length !== 0) {
+            document.getElementById("featuredZonesWrapper").removeAttribute("open");
+        }
+        displayZones(filteredZones);
+    }
 }
 
 function filterZones() {
@@ -571,9 +612,9 @@ settings.addEventListener('click', () => {
     document.getElementById('popupTitle').textContent = "Settings";
     const popupBody = document.getElementById('popupBody');
     popupBody.innerHTML = `
-    <button id="settings-button" onclick="darkMode()">Toggle Dark Mode</button>
+    <button class="settings-button" onclick="darkMode()">Toggle Dark Mode</button>
     <br><br>
-    <button id="settings-button" onclick="tabCloak()">Tab Cloak</button>
+    <button class="settings-button" onclick="tabCloak()">Tab Cloak</button>
     <br>
     `;
     popupBody.contentEditable = false;
